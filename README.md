@@ -19,3 +19,5 @@ no library for display
 voltage divider
 self heating and using digital high for 5v source (note to self use multi meter and see if there is any voltage difference
 
+m3 heated inserts (OD: 4mm, length: 4mm)[note:seller was calling these 4.2m OD so that also works]
+

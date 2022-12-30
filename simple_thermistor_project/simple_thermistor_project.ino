@@ -1,4 +1,5 @@
 using namespace std;
+#include <math.h>
 
 /* LED segment positions
  *    ┌─────┐
@@ -44,6 +45,7 @@ float logR2, R2, T;
 float c1 = 1.009249522e-03, c2 = 2.378405444e-04, c3 = 2.019202697e-07;
 float temperature;
 int digits[4];
+bool decimalPoints[4] ={false, false,false,false};
 
 char dTens;
 char dOnes;
@@ -86,6 +88,8 @@ void loop() {
     R2 = R1 * (1023.0 / (float)Vo - 1.0);
     logR2 = log(R2);
     temperature = ((1.0 / (c1 + c2 * logR2 + c3 * logR2 * logR2 * logR2)) - 273.15);
+//rounds temp to one decimal place.
+temperature =round(temperature* 10) / 10.0;
 
     // cast float to string, convert back to digit, store in array, loop over array, display digits
     tempString = String(temperature);
@@ -99,22 +103,10 @@ void loop() {
       digits[0] = dTens - '0';
       digits[1] = dOnes - '0';
       digits[2] = dtenths - '0';
-      digits[3] = dhundredths - '0';
+      digits[3] = -888;
 
-      //round to one decimal point
-      //ex: 39.96 => 40.0(0)
-      if (digits[3] >= 5) {
-        digits[3] = 0;
-        digits[2]++;
-      }
-      if (digits[2] == 10) {
-        digits[2] = 0;
-        digits[1]++;
-      }
-      if (digits[1] == 10) {
-        digits[1] = 0;
-        digits[0]++;
-      }
+      decimalPoints[1] = true;
+
 
     } else if (temperature < 10.0 && temperature > 0) {
       dOnes = tempString.charAt(0);
@@ -125,10 +117,36 @@ void loop() {
       digits[0] = 0;
       digits[1] = dOnes - '0';
       digits[2] = dtenths - '0';
-      digits[3] = dhundredths - '0';
+      digits[3] = -888;
+        decimalPoints[1] = true;
     }
-    //TODO:write for negative temps
-    //TODO:write code that displays c if digit is -99 or something
+     //-x.xx
+    else if (temperature < 0.0 && temperature > -10.0){
+      dOnes = tempString.charAt(1);
+      dtenths = tempString.charAt(3);
+      dhundredths = tempString.charAt(4);
+
+      //convert char to int
+      digits[0] = -999;
+      digits[1] = dOnes - '0';
+      digits[2] = dtenths - '0';
+      digits[3] = -888;
+        decimalPoints[1] = true;
+
+    }
+   // -xx.xx
+    else if (temperature <= -10.0 && temperature >-100.0 ){
+      dTens = tempString.charAt(1);
+      dOnes = tempString.charAt(2);
+      dtenths = tempString.charAt(4);
+      dhundredths = tempString.charAt(5);
+
+      digits[0] = -999;
+      digits[1] = dTens - '0';
+      digits[2] = dOnes - '0';
+      digits[3] = dtenths - '0';
+        decimalPoints[2] = true;
+    }
   }
 
 
@@ -136,34 +154,32 @@ void loop() {
   delay(5);
   
 //TODO:write loop here for zero to three
+//todo; write code for decimal place code
   //display
   clearDisplay();         //Turn off all LED lights
+  //todo rewrite pickdigit to start at zero
   pickDigit(1);           //Selection of a digital display
-  pickNumber(digits[0]);  //Display digital d1
+  pickNumber(digits[0]); 
+  displayDecimalPoint(decimalPoints[0]);  //Display digital d1
   delayMicroseconds(200);
 
   clearDisplay();          //Turn off all LED lights
   pickDigit(2);            //Select the first two digital display
-  displayDecimalPoint(2);  //Decimal display
+  displayDecimalPoint(decimalPoints[1]);  //Decimal display
   pickNumber(digits[1]);   //Display digital d2
   delayMicroseconds(200);
 
   clearDisplay();         //Turn off all LED lights
   pickDigit(3);           //Select the first three digital display
   pickNumber(digits[2]);  //Display digital d3
+  displayDecimalPoint(decimalPoints[2]);
   delayMicroseconds(200);
 
   //set dig 4 to 'c'
   clearDisplay();
   pickDigit(4);
-  digitalWrite(segA, HIGH);
-  digitalWrite(segB, LOW);
-  digitalWrite(segC, LOW);
-  digitalWrite(segD, LOW);
-  digitalWrite(segE, LOW);
-  digitalWrite(segF, HIGH);
-  digitalWrite(segG, HIGH);
-  digitalWrite(segDP, LOW);
+  pickNumber(digits[3]); 
+displayDecimalPoint(decimalPoints[3]);
   delayMicroseconds(200);
   clearDisplay();
 }
@@ -199,16 +215,21 @@ void pickNumber(int x)  //Defined pickNumber (x), whose role is to display digit
     case 9:
       nine();
       break;
-    default:
+    case -888:
+      celcius();
+    case -999:
+  negative(); 
+      default:
       zero();
       break;
   }
 }
 
-void displayDecimalPoint(int x)  //Decimal point setting Open
+void displayDecimalPoint(bool displayDecimalPoint)  //Decimal point setting Open
 {
+if (displayDecimalPoint)  {
   digitalWrite(segDP, HIGH);
-}
+}}
 
 void pickDigit(int x)  //Defined pickDigit (x), whose role is to open the port dx
 {
@@ -244,6 +265,27 @@ void clearDisplay()  // Clear LED screen
   digitalWrite(segDP, LOW);
 }
 
+void celcius(){
+    digitalWrite(segA, HIGH);
+  digitalWrite(segB, LOW);
+  digitalWrite(segC, LOW);
+  digitalWrite(segD, LOW);
+  digitalWrite(segE, LOW);
+  digitalWrite(segF, HIGH);
+  digitalWrite(segG, HIGH);
+  digitalWrite(segDP, LOW);
+}
+
+void negative(){
+  digitalWrite(segA, LOW);
+  digitalWrite(segB, LOW);
+  digitalWrite(segC, LOW);
+  digitalWrite(segD, LOW);
+  digitalWrite(segE, LOW);
+  digitalWrite(segF, LOW);
+  digitalWrite(segG, HIGH);  
+    digitalWrite(segDP, LOW);
+}
 
 
 void zero()  //Define those figures 0 cathode pin switch
