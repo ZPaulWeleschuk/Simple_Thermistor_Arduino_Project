@@ -18,7 +18,6 @@ using namespace std;
  *       D       DP
  *    └─────┘   └──┘
  */
-
 #define segA 9
 #define segB 7
 #define segC 3
@@ -28,33 +27,34 @@ using namespace std;
 #define segG 2
 #define segDP 4  // decimal point
 
-// note: digits start on left; 2031 == {dig1 = 2, dig2 = 0, dig3 = 3, dig4 = 1}
-#define dig1 10
-#define dig2 12
-#define dig3 13
-#define dig4 11
+// note: digits start on left; 2031 == {dig0 = 2, dig1 = 0, dig2 = 3, dig3 = 1}
+// note: the digit pins on the LED display may start counting at one and not zero.
+#define dig0 10
+#define dig1 12
+#define dig2 13
+#define dig3 11
 
+// pins for ntc thermistor
 #define ntcInput A7
 #define ntcPower A5
 
 // thermistor variables
-
 int Vo;
 float R1 = 10000;
 float logR2, R2, T;
 float c1 = 1.009249522e-03, c2 = 2.378405444e-04, c3 = 2.019202697e-07;
 float temperature;
 int digits[4];
-bool decimalPoints[4] ={false, false,false,false};
+bool decimalPoints[4] = { false, false, false, false };
 
+// display variables
 char dTens;
 char dOnes;
 char dtenths;
 char dhundredths;
-
 String tempString;
 
-// The value will quickly become too large for an int to store
+// the value will quickly become too large for an int to store
 unsigned long previousMillis = 0;  // will store last time LED was updated
 const long interval = 500;         // interval at which to update display
 
@@ -67,33 +67,34 @@ void setup() {
   pinMode(segF, OUTPUT);
   pinMode(segG, OUTPUT);
   pinMode(segDP, OUTPUT);
+  pinMode(dig0, OUTPUT);
   pinMode(dig1, OUTPUT);
   pinMode(dig2, OUTPUT);
   pinMode(dig3, OUTPUT);
-  pinMode(dig4, OUTPUT);
 
-  pinMode(ntcPower, OUTPUT);
-  digitalWrite(ntcPower, HIGH);
-  pinMode(ntcInput, INPUT);  // analog
-
-
+  pinMode(ntcPower, OUTPUT);     // being used as a digital power output pin.
+  digitalWrite(ntcPower, HIGH);  // this allows power to be turned on and off.
+  pinMode(ntcInput, INPUT);      // analog
 }
 
 void loop() {
   unsigned long currentMillis = millis();
-  //update display ever invertal(500) ms
+  //update display ever interval(500) ms
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
-    Vo = analogRead(ntcInput);
-    R2 = R1 * (1023.0 / (float)Vo - 1.0);
+    //Vo = analogRead(ntcInput);
+    //R2 = R1 * (1023.0 / (float)Vo - 1.0);
+    R2 = R1 * (1023.0 / (float)(analogRead(ntcInput)) - 1.0);
     logR2 = log(R2);
     temperature = ((1.0 / (c1 + c2 * logR2 + c3 * logR2 * logR2 * logR2)) - 273.15);
-//rounds temp to one decimal place.
-temperature =round(temperature* 10) / 10.0;
+    //rounds temperature to one decimal place.
+    temperature = round(temperature * 10) / 10.0;
 
     // cast float to string, convert back to digit, store in array, loop over array, display digits
     tempString = String(temperature);
+
     if (temperature < 100.0 && temperature >= 10.0) {
+      // xx.xc
       dTens = tempString.charAt(0);
       dOnes = tempString.charAt(1);
       dtenths = tempString.charAt(3);
@@ -103,12 +104,11 @@ temperature =round(temperature* 10) / 10.0;
       digits[0] = dTens - '0';
       digits[1] = dOnes - '0';
       digits[2] = dtenths - '0';
-      digits[3] = -888;
-
+      digits[3] = -888;  //"c"
       decimalPoints[1] = true;
 
-
-    } else if (temperature < 10.0 && temperature > 0) {
+    } else if (temperature < 10.0 && temperature > 0.0) {
+      // x.xc
       dOnes = tempString.charAt(0);
       dtenths = tempString.charAt(2);
       dhundredths = tempString.charAt(3);
@@ -117,75 +117,54 @@ temperature =round(temperature* 10) / 10.0;
       digits[0] = 0;
       digits[1] = dOnes - '0';
       digits[2] = dtenths - '0';
-      digits[3] = -888;
-        decimalPoints[1] = true;
-    }
-     //-x.xx
-    else if (temperature < 0.0 && temperature > -10.0){
+      digits[3] = -888;  // "c"
+      decimalPoints[1] = true;
+    } else if (temperature < 0.0 && temperature > -10.0) {
+      // -x.xc
       dOnes = tempString.charAt(1);
       dtenths = tempString.charAt(3);
       dhundredths = tempString.charAt(4);
 
-      //convert char to int
-      digits[0] = -999;
+      // convert char to int
+      digits[0] = -999;  // "-"
       digits[1] = dOnes - '0';
       digits[2] = dtenths - '0';
-      digits[3] = -888;
-        decimalPoints[1] = true;
+      digits[3] = -888;  // "c"
+      decimalPoints[1] = true;
 
     }
-   // -xx.xx
-    else if (temperature <= -10.0 && temperature >-100.0 ){
+
+    else if (temperature <= -10.0 && temperature > -100.0) {
+      // -xx.x
       dTens = tempString.charAt(1);
       dOnes = tempString.charAt(2);
       dtenths = tempString.charAt(4);
       dhundredths = tempString.charAt(5);
 
-      digits[0] = -999;
+      digits[0] = -999;  // "-"
       digits[1] = dTens - '0';
       digits[2] = dOnes - '0';
       digits[3] = dtenths - '0';
-        decimalPoints[2] = true;
+      decimalPoints[2] = true;
     }
   }
 
-
-  //this delay controls the brightness (0 for full brightness, 20 for dim)
+  // this delay controls the brightness (0 for full brightness, 20 for dim)
   delay(5);
-  
-//TODO:write loop here for zero to three
-//todo; write code for decimal place code
-  //display
-  clearDisplay();         //Turn off all LED lights
-  //todo rewrite pickdigit to start at zero
-  pickDigit(1);           //Selection of a digital display
-  pickNumber(digits[0]); 
-  displayDecimalPoint(decimalPoints[0]);  //Display digital d1
-  delayMicroseconds(200);
 
-  clearDisplay();          //Turn off all LED lights
-  pickDigit(2);            //Select the first two digital display
-  displayDecimalPoint(decimalPoints[1]);  //Decimal display
-  pickNumber(digits[1]);   //Display digital d2
-  delayMicroseconds(200);
-
-  clearDisplay();         //Turn off all LED lights
-  pickDigit(3);           //Select the first three digital display
-  pickNumber(digits[2]);  //Display digital d3
-  displayDecimalPoint(decimalPoints[2]);
-  delayMicroseconds(200);
-
-  //set dig 4 to 'c'
-  clearDisplay();
-  pickDigit(4);
-  pickNumber(digits[3]); 
-displayDecimalPoint(decimalPoints[3]);
-  delayMicroseconds(200);
-  clearDisplay();
+  // loops through display functions for each digit
+  for (int i = 0; i < 4; i++) {
+    // these functions are for common cathode 4 digit, 7 segment LED display
+    clearSegments();
+    selectDigit(i);
+    displayNumber(digits[i]);
+    displayDecimalPoint(decimalPoints[i]);
+    delayMicroseconds(200);
+  }
 }
 
-
-void pickNumber(int x)  //Defined pickNumber (x), whose role is to display digital x
+// determine which segments to set
+void displayNumber(int x)  
 {
   switch (x) {
     case 1:
@@ -218,42 +197,46 @@ void pickNumber(int x)  //Defined pickNumber (x), whose role is to display digit
     case -888:
       celcius();
     case -999:
-  negative(); 
-      default:
+      negative();
+    default:
       zero();
       break;
   }
 }
 
-void displayDecimalPoint(bool displayDecimalPoint)  //Decimal point setting Open
+// display decimal point segment
+void displayDecimalPoint(bool displayDecimalPoint)
 {
-if (displayDecimalPoint)  {
-  digitalWrite(segDP, HIGH);
-}}
+  if (displayDecimalPoint) {
+    digitalWrite(segDP, HIGH);
+  }
+}
 
-void pickDigit(int x)  //Defined pickDigit (x), whose role is to open the port dx
+// open dx port by setting specified digit pin to low
+void selectDigit(int x) 
 {
+  digitalWrite(dig0, HIGH);
   digitalWrite(dig1, HIGH);
   digitalWrite(dig2, HIGH);
   digitalWrite(dig3, HIGH);
-  digitalWrite(dig4, HIGH);
   switch (x) {
+    case 0:
+      digitalWrite(dig0, LOW);
+      break;
     case 1:
       digitalWrite(dig1, LOW);
       break;
     case 2:
       digitalWrite(dig2, LOW);
       break;
-    case 3:
-      digitalWrite(dig3, LOW);
-      break;
     default:
-      digitalWrite(dig4, LOW);
+      digitalWrite(dig3, LOW);
       break;
   }
 }
 
-void clearDisplay()  // Clear LED screen
+// Clear LED segments
+void clearSegments()  
 {
   digitalWrite(segA, LOW);
   digitalWrite(segB, LOW);
@@ -265,8 +248,9 @@ void clearDisplay()  // Clear LED screen
   digitalWrite(segDP, LOW);
 }
 
-void celcius(){
-    digitalWrite(segA, HIGH);
+// set segments to display super script 'c'
+void celcius() {
+  digitalWrite(segA, HIGH);
   digitalWrite(segB, LOW);
   digitalWrite(segC, LOW);
   digitalWrite(segD, LOW);
@@ -276,19 +260,20 @@ void celcius(){
   digitalWrite(segDP, LOW);
 }
 
-void negative(){
+// set segments to display '-' symbol
+void negative() {
   digitalWrite(segA, LOW);
   digitalWrite(segB, LOW);
   digitalWrite(segC, LOW);
   digitalWrite(segD, LOW);
   digitalWrite(segE, LOW);
   digitalWrite(segF, LOW);
-  digitalWrite(segG, HIGH);  
-    digitalWrite(segDP, LOW);
+  digitalWrite(segG, HIGH);
+  digitalWrite(segDP, LOW);
 }
 
-
-void zero()  //Define those figures 0 cathode pin switch
+// set segments to display 0
+void zero() 
 {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, HIGH);
@@ -299,7 +284,8 @@ void zero()  //Define those figures 0 cathode pin switch
   digitalWrite(segG, LOW);
 }
 
-void one()  //Define those figures 1 cathode pin switch
+// set segments to display 1
+void one()  
 {
   digitalWrite(segA, LOW);
   digitalWrite(segB, HIGH);
@@ -310,7 +296,8 @@ void one()  //Define those figures 1 cathode pin switch
   digitalWrite(segG, LOW);
 }
 
-void two()  //Define those figures 2 cathode pin switch
+// set segments to display 2
+void two()  
 {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, HIGH);
@@ -321,7 +308,8 @@ void two()  //Define those figures 2 cathode pin switch
   digitalWrite(segG, HIGH);
 }
 
-void three()  //Define those figures 3 cathode pin switch
+// set segments to display 3
+void three() 
 {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, HIGH);
@@ -332,7 +320,8 @@ void three()  //Define those figures 3 cathode pin switch
   digitalWrite(segG, HIGH);
 }
 
-void four()  //Define those figures 4 cathode pin switch
+// set segments to display 4
+void four()  
 {
   digitalWrite(segA, LOW);
   digitalWrite(segB, HIGH);
@@ -343,7 +332,8 @@ void four()  //Define those figures 4 cathode pin switch
   digitalWrite(segG, HIGH);
 }
 
-void five()  //Define those figures 5 cathode pin switch
+// set segments to display 5
+void five()  
 {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, LOW);
@@ -354,7 +344,8 @@ void five()  //Define those figures 5 cathode pin switch
   digitalWrite(segG, HIGH);
 }
 
-void six()  //Define those figures 6 cathode pin switch
+// set segments to display 6
+void six()  
 {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, LOW);
@@ -365,7 +356,8 @@ void six()  //Define those figures 6 cathode pin switch
   digitalWrite(segG, HIGH);
 }
 
-void seven()  //Define those figures 7 cathode pin switch
+// set segments to display 7
+void seven()  
 {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, HIGH);
@@ -376,7 +368,8 @@ void seven()  //Define those figures 7 cathode pin switch
   digitalWrite(segG, LOW);
 }
 
-void eight()  //Define those figures 8 cathode pin switch
+// set segments to display 8
+void eight()  
 {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, HIGH);
@@ -387,7 +380,8 @@ void eight()  //Define those figures 8 cathode pin switch
   digitalWrite(segG, HIGH);
 }
 
-void nine()  //Define those figures 9 cathode pin switch
+// set segments to display 9
+void nine() 
 {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, HIGH);
