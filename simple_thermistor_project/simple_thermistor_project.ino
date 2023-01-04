@@ -44,14 +44,10 @@ float R1 = 10000;
 float logR2, R2, T;
 float c1 = 1.009249522e-03, c2 = 2.378405444e-04, c3 = 2.019202697e-07;
 float temperature;
-int digits[4];//TODO: array of chars?
+char digits[4];
 bool decimalPoints[4] = { false, false, false, false };
 
 // display variables
-char dTens;
-char dOnes;
-char dtenths;
-char dhundredths;
 String tempString;
 
 // the value will quickly become too large for an int to store
@@ -91,74 +87,45 @@ void loop() {
     // cast float to string, convert back to digit, store in array, loop over array, display digits
     tempString = String(temperature);
 
+    if (temperature > 100) {
+      // xxx.x
+      digits[0] = tempString.charAt(0);
+      digits[1] = tempString.charAt(1);
+      digits[2] = tempString.charAt(2);
+      digits[3] = tempString.charAt(4);
+      setDecimalPoint(2);
 
-    if (temperature > 100){
-    // xxx.x
-      dTens = tempString.charAt(0);
-      dOnes = tempString.charAt(1);
-      dtenths = tempString.charAt(2);
-      dhundredths = tempString.charAt(4);
-
-      //convert char to int
-      digits[0] = dTens - '0';
-      digits[1] = dOnes - '0';
-      digits[2] = dtenths - '0';
-      digits[3] = dhundredths - '0';
-      setDecimalPoint(2);  
-                  
-    }
-    else if (temperature < 100.0 && temperature >= 10.0) {
+    } else if (temperature < 100.0 && temperature >= 10.0) {
       // xx.xc
-      dTens = tempString.charAt(0);
-      dOnes = tempString.charAt(1);
-      dtenths = tempString.charAt(3);
-      dhundredths = tempString.charAt(4);
-
-      //convert char to int
-      digits[0] = dTens - '0';
-      digits[1] = dOnes - '0';
-      digits[2] = dtenths - '0';
-      digits[3] = -888;  //"c"
+      digits[0] = tempString.charAt(0);
+      digits[1] = tempString.charAt(1);
+      digits[2] = tempString.charAt(3);
+      digits[3] = 'c';
       setDecimalPoint(1);
 
     } else if (temperature < 10.0 && temperature > 0.0) {
       // x.xc
-      dOnes = tempString.charAt(0);
-      dtenths = tempString.charAt(2);
-      dhundredths = tempString.charAt(3);
-
-      //convert char to int
-      digits[0] = 0;
-      digits[1] = dOnes - '0';
-      digits[2] = dtenths - '0';
-      digits[3] = -888;  // "c"
+      digits[0] = '0';
+      digits[1] = tempString.charAt(0);
+      ;
+      digits[2] = tempString.charAt(2);
+      digits[3] = 'c';
       setDecimalPoint(1);
-      
+
     } else if (temperature < 0.0 && temperature > -10.0) {
       // -x.xc
-      dOnes = tempString.charAt(1);
-      dtenths = tempString.charAt(3);
-      dhundredths = tempString.charAt(4);
-
-      // convert char to int
-      digits[0] = -999;  // "-"
-      digits[1] = dOnes - '0';
-      digits[2] = dtenths - '0';
-      digits[3] = -888;  // "c"
+      digits[0] = '-';
+      digits[1] = tempString.charAt(1);
+      digits[2] = tempString.charAt(3);
+      digits[3] = 'c';
       setDecimalPoint(1);
-      
-    }
-    else if (temperature <= -10.0 && temperature > -100.0) {
-      // -xx.x
-      dTens = tempString.charAt(1);
-      dOnes = tempString.charAt(2);
-      dtenths = tempString.charAt(4);
-      dhundredths = tempString.charAt(5);
 
-      digits[0] = -999;  // "-"
-      digits[1] = dTens - '0';
-      digits[2] = dOnes - '0';
-      digits[3] = dtenths - '0';
+    } else if (temperature <= -10.0 && temperature > -100.0) {
+      // -xx.x
+      digits[0] = '-';
+      digits[1] = tempString.charAt(1);
+      digits[2] = tempString.charAt(2);
+      digits[3] = tempString.charAt(4);
       setDecimalPoint(2);
     }
   }
@@ -180,39 +147,39 @@ void loop() {
 }
 
 // determine which segments to set
-void displayNumber(int x) {
+void displayNumber(char x) {
   switch (x) {
-    case 1:
+    case '1':
       one();
       break;
-    case 2:
+    case '2':
       two();
       break;
-    case 3:
+    case '3':
       three();
       break;
-    case 4:
+    case '4':
       four();
       break;
-    case 5:
+    case '5':
       five();
       break;
-    case 6:
+    case '6':
       six();
       break;
-    case 7:
+    case '7':
       seven();
       break;
-    case 8:
+    case '8':
       eight();
       break;
-    case 9:
+    case '9':
       nine();
       break;
-    case -888:
+    case 'c':
       celcius();
       break;
-    case -999:
+    case '-':
       negative();
       break;
     default:
