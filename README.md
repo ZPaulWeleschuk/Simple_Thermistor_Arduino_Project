@@ -24,6 +24,6 @@ This project has a built in custom display controller for the LED display and do
 
 This project is mounted to a 3d printed pivoting stand. More information about the stand can be found on my Printables page:
 ![3d printed stand for project](https://github.com/ZPaulWeleschuk/Simple_Thermistor_Arduino_Project/blob/main/images/image_project_on_stand.jpg)
-(link to be added soon)
+Link: [Prototyping board display stand](https://www.printables.com/model/357368-prototyping-board-display-stand)
 
 
