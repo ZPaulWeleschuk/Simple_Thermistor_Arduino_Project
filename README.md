@@ -10,12 +10,14 @@ This devices can be used for monitoring the temperature of a computer case, 3d p
 - Arduino nano
 - 10k @ 25c NTC thermistor
 - 4 digit, seven segment display (12 pin, common cathode)
+- 60x40mm prototyping board
 - 8 - 220 ohmn resistor
 - 1 - 10k ohmn resistor
-- 60x40mm prototyping board
 - wire
 
 ![close up of project](https://github.com/ZPaulWeleschuk/Simple_Thermistor_Arduino_Project/blob/main/images/image_board_close_up.jpg)
+![wiring diagram](https://github.com/ZPaulWeleschuk/Simple_Thermistor_Arduino_Project/blob/main/images/wiringDiagram.jpg)
+![wiring of project](https://github.com/ZPaulWeleschuk/Simple_Thermistor_Arduino_Project/blob/main/images/image_wiring_back_of_board.jpg)
 
 
 This project has a built in custom display controller for the LED display and does not use a library.
