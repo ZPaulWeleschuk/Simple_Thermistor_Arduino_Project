@@ -44,7 +44,7 @@ float R1 = 10000;
 float logR2, R2, T;
 float c1 = 1.009249522e-03, c2 = 2.378405444e-04, c3 = 2.019202697e-07;
 float temperature;
-int digits[4];
+int digits[4];//TODO: array of chars?
 bool decimalPoints[4] = { false, false, false, false };
 
 // display variables
@@ -82,8 +82,6 @@ void loop() {
   //update display ever interval(500) ms
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
-    //Vo = analogRead(ntcInput);
-    //R2 = R1 * (1023.0 / (float)Vo - 1.0);
     R2 = R1 * (1023.0 / (float)(analogRead(ntcInput)) - 1.0);
     logR2 = log(R2);
     temperature = ((1.0 / (c1 + c2 * logR2 + c3 * logR2 * logR2 * logR2)) - 273.15);
@@ -93,7 +91,23 @@ void loop() {
     // cast float to string, convert back to digit, store in array, loop over array, display digits
     tempString = String(temperature);
 
-    if (temperature < 100.0 && temperature >= 10.0) {
+
+    if (temperature > 100){
+    // xxx.x
+      dTens = tempString.charAt(0);
+      dOnes = tempString.charAt(1);
+      dtenths = tempString.charAt(2);
+      dhundredths = tempString.charAt(4);
+
+      //convert char to int
+      digits[0] = dTens - '0';
+      digits[1] = dOnes - '0';
+      digits[2] = dtenths - '0';
+      digits[3] = dhundredths - '0';
+      setDecimalPoint(2);  
+                  
+    }
+    else if (temperature < 100.0 && temperature >= 10.0) {
       // xx.xc
       dTens = tempString.charAt(0);
       dOnes = tempString.charAt(1);
@@ -105,7 +119,7 @@ void loop() {
       digits[1] = dOnes - '0';
       digits[2] = dtenths - '0';
       digits[3] = -888;  //"c"
-      decimalPoints[1] = true;
+      setDecimalPoint(1);
 
     } else if (temperature < 10.0 && temperature > 0.0) {
       // x.xc
@@ -118,7 +132,8 @@ void loop() {
       digits[1] = dOnes - '0';
       digits[2] = dtenths - '0';
       digits[3] = -888;  // "c"
-      decimalPoints[1] = true;
+      setDecimalPoint(1);
+      
     } else if (temperature < 0.0 && temperature > -10.0) {
       // -x.xc
       dOnes = tempString.charAt(1);
@@ -130,10 +145,9 @@ void loop() {
       digits[1] = dOnes - '0';
       digits[2] = dtenths - '0';
       digits[3] = -888;  // "c"
-      decimalPoints[1] = true;
-
+      setDecimalPoint(1);
+      
     }
-
     else if (temperature <= -10.0 && temperature > -100.0) {
       // -xx.x
       dTens = tempString.charAt(1);
@@ -145,12 +159,13 @@ void loop() {
       digits[1] = dTens - '0';
       digits[2] = dOnes - '0';
       digits[3] = dtenths - '0';
-      decimalPoints[2] = true;
+      setDecimalPoint(2);
     }
   }
 
   // this delay controls the brightness (0 for full brightness, 20 for dim)
   delay(5);
+
 
   // loops through display functions for each digit
   for (int i = 0; i < 4; i++) {
@@ -160,12 +175,12 @@ void loop() {
     displayNumber(digits[i]);
     displayDecimalPoint(decimalPoints[i]);
     delayMicroseconds(200);
+    clearSegments();
   }
 }
 
 // determine which segments to set
-void displayNumber(int x)  
-{
+void displayNumber(int x) {
   switch (x) {
     case 1:
       one();
@@ -196,8 +211,10 @@ void displayNumber(int x)
       break;
     case -888:
       celcius();
+      break;
     case -999:
       negative();
+      break;
     default:
       zero();
       break;
@@ -205,16 +222,24 @@ void displayNumber(int x)
 }
 
 // display decimal point segment
-void displayDecimalPoint(bool displayDecimalPoint)
-{
+void displayDecimalPoint(bool displayDecimalPoint) {
   if (displayDecimalPoint) {
     digitalWrite(segDP, HIGH);
   }
 }
 
+// set decimal array
+void setDecimalPoint(int x) {
+  decimalPoints[0] = false;
+  decimalPoints[1] = false;
+  decimalPoints[2] = false;
+  decimalPoints[3] = false;
+
+  decimalPoints[x] = true;
+}
+
 // open dx port by setting specified digit pin to low
-void selectDigit(int x) 
-{
+void selectDigit(int x) {
   digitalWrite(dig0, HIGH);
   digitalWrite(dig1, HIGH);
   digitalWrite(dig2, HIGH);
@@ -236,8 +261,7 @@ void selectDigit(int x)
 }
 
 // Clear LED segments
-void clearSegments()  
-{
+void clearSegments() {
   digitalWrite(segA, LOW);
   digitalWrite(segB, LOW);
   digitalWrite(segC, LOW);
@@ -273,8 +297,7 @@ void negative() {
 }
 
 // set segments to display 0
-void zero() 
-{
+void zero() {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, HIGH);
   digitalWrite(segC, HIGH);
@@ -285,8 +308,7 @@ void zero()
 }
 
 // set segments to display 1
-void one()  
-{
+void one() {
   digitalWrite(segA, LOW);
   digitalWrite(segB, HIGH);
   digitalWrite(segC, HIGH);
@@ -297,8 +319,7 @@ void one()
 }
 
 // set segments to display 2
-void two()  
-{
+void two() {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, HIGH);
   digitalWrite(segC, LOW);
@@ -309,8 +330,7 @@ void two()
 }
 
 // set segments to display 3
-void three() 
-{
+void three() {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, HIGH);
   digitalWrite(segC, HIGH);
@@ -321,8 +341,7 @@ void three()
 }
 
 // set segments to display 4
-void four()  
-{
+void four() {
   digitalWrite(segA, LOW);
   digitalWrite(segB, HIGH);
   digitalWrite(segC, HIGH);
@@ -333,8 +352,7 @@ void four()
 }
 
 // set segments to display 5
-void five()  
-{
+void five() {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, LOW);
   digitalWrite(segC, HIGH);
@@ -345,8 +363,7 @@ void five()
 }
 
 // set segments to display 6
-void six()  
-{
+void six() {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, LOW);
   digitalWrite(segC, HIGH);
@@ -357,8 +374,7 @@ void six()
 }
 
 // set segments to display 7
-void seven()  
-{
+void seven() {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, HIGH);
   digitalWrite(segC, HIGH);
@@ -369,8 +385,7 @@ void seven()
 }
 
 // set segments to display 8
-void eight()  
-{
+void eight() {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, HIGH);
   digitalWrite(segC, HIGH);
@@ -381,8 +396,7 @@ void eight()
 }
 
 // set segments to display 9
-void nine() 
-{
+void nine() {
   digitalWrite(segA, HIGH);
   digitalWrite(segB, HIGH);
   digitalWrite(segC, HIGH);
